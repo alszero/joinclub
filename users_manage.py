@@ -18,7 +18,7 @@ class UsersManager:
         statement = "SELECT permission FROM members WHERE student_id = :user_id"
         cursor.execute(statement, user_id=user_id)
         permission = cursor.fetchone()
-        return permission[0] if permission else None
+        return permission[0].lower() if permission else None
     
     def get_user_name(self, student_id):
         cursor = self.db_connection.cursor
@@ -30,14 +30,20 @@ class UsersManager:
     def login(self, email, password):
         cursor = self.db_connection.cursor
         statement = """
-            SELECT student_id, name FROM members
+            SELECT student_id, name, permission FROM members
             WHERE email = :email AND password = :password
         """
         cursor.execute(statement, email=email, password=password)
         row = cursor.fetchone()
         if row:
             self.current_user_id = row[0]  # 로그인 성공 시 current_user_id 설정
-            return row[1]  # 로그인한 사용자 이름 반환
+            return row[1], row[2]  # 로그인한 사용자 이름과 권한 반환
         else:
             print("로그인 실패")
-            return None
+            return None, None
+
+    def logout_and_exit(users_manager):
+        if users_manager.current_user_id is not None:
+            print("로그아웃 중...")
+            users_manager.current_user_id = None
+        print("프로그램을 종료합니다.")
